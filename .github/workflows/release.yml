@@ -64,7 +64,7 @@ jobs:
   # ----------------------------------------------------------------------------
   build:
     name: Binaries, RPM and image
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 240
     outputs:
       version: ${{ steps.meta.outputs.version }}
@@ -183,7 +183,7 @@ jobs:
   # ----------------------------------------------------------------------------
   helm:
     name: Helm charts
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Check out Teleport source
         uses: actions/checkout@v7
@@ -227,7 +227,7 @@ jobs:
     name: GitHub Release
     needs: [build, helm]
     if: github.event_name == 'push' || inputs.publish == true
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v8

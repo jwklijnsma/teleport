@@ -98,7 +98,7 @@ jobs:
           echo "Building Teleport ${version} from ${SOURCE_REPOSITORY}@${SOURCE_REF}" | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Restore dependency caches
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: src/.cache
           key: deps-${{ hashFiles('src/build.assets/versions.mk', 'src/Cargo.lock', 'src/go.sum') }}

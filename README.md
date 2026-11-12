@@ -5,8 +5,8 @@ Builds [Teleport](https://github.com/gravitational/teleport) from source with Gi
 | Artifact | Where |
 |---|---|
 | `teleport-<version>-1.x86_64.rpm`, `.deb`, release tarball | GitHub Releases |
-| Container image | `ghcr.io/jwklijnsma/teleport:<version>` |
-| Helm charts (`teleport-cluster`, `teleport-kube-agent`) | `oci://ghcr.io/jwklijnsma/charts/<chart>` and the release |
+| Container image | `ghcr.io/jwklijnsma/teleport/teleport-distroless:<version>` |
+| Helm charts (`teleport-cluster`, `teleport-kube-agent`) | `oci://ghcr.io/jwklijnsma/teleport/charts/<chart>` and the release |
 
 ## Usage
 

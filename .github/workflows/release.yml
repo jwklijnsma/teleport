@@ -1,8 +1,13 @@
 # Builds Teleport from source and publishes everything on GitHub:
 #
 #   RPM / DEB / tarball  ->  GitHub Release
-#   container image      ->  ghcr.io/<owner>/teleport:<version>
-#   Helm charts          ->  oci://ghcr.io/<owner>/charts/<chart>  (+ .tgz on the release)
+#   container image      ->  ghcr.io/<owner>/<repo>/teleport-distroless:<version>
+#   Helm charts          ->  oci://ghcr.io/<owner>/<repo>/charts/<chart>  (+ .tgz on the release)
+#
+# The GHCR names are nested under the repository name on purpose: packages this
+# workflow creates there are owned by this repo, so its GITHUB_TOKEN may write
+# them. A pre-existing package such as ghcr.io/<owner>/teleport that was pushed
+# from elsewhere rejects the token with "permission_denied: write_package".
 #
 # Triggers
 #   * push of a tag vX.Y.Z      : builds the source ref with the same name and publishes.
@@ -86,10 +91,9 @@ jobs:
         run: |
           version="$(sed -n 's/^VERSION=//p' src/Makefile)"
           [ -n "$version" ] || { echo "::error::no VERSION in src/Makefile"; exit 1; }
-          owner="${GITHUB_REPOSITORY_OWNER,,}"
           {
             echo "version=${version}"
-            echo "image=ghcr.io/${owner}/teleport"
+            echo "image=ghcr.io/${GITHUB_REPOSITORY,,}/teleport-distroless"
           } >> "$GITHUB_OUTPUT"
           echo "Building Teleport ${version} from ${SOURCE_REPOSITORY}@${SOURCE_REF}" | tee -a "$GITHUB_STEP_SUMMARY"
 
@@ -190,12 +194,12 @@ jobs:
 
       - name: Package charts
         run: |
-          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          image="ghcr.io/${GITHUB_REPOSITORY,,}/teleport-distroless"
           mkdir -p dist
           for chart in $HELM_CHARTS; do
             dir="examples/chart/${chart}"
             # Default the charts to the image built by this workflow.
-            sed -i "s#^image: public.ecr.aws/gravitational/teleport-distroless\$#image: ghcr.io/${owner}/teleport#" "${dir}/values.yaml"
+            sed -i "s#^image: public.ecr.aws/gravitational/teleport-distroless\$#image: ${image}#" "${dir}/values.yaml"
             helm package "${dir}" --destination dist
           done
           ls -l dist
@@ -211,10 +215,9 @@ jobs:
       - name: Push charts to GHCR
         if: env.PUBLISH == 'true'
         run: |
-          owner="${GITHUB_REPOSITORY_OWNER,,}"
           echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u "${{ github.actor }}" --password-stdin
           for tgz in dist/*.tgz; do
-            helm push "$tgz" "oci://ghcr.io/${owner}/charts"
+            helm push "$tgz" "oci://ghcr.io/${GITHUB_REPOSITORY,,}/charts"
           done
 
   # ----------------------------------------------------------------------------
@@ -239,7 +242,6 @@ jobs:
           IMAGE: ${{ needs.build.outputs.image }}
           TAG: ${{ github.event_name == 'push' && github.ref_name || format('v{0}', needs.build.outputs.version) }}
         run: |
-          owner="${GITHUB_REPOSITORY_OWNER,,}"
           base="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${TAG}"
           cat > notes.md <<EOF
           Teleport ${VERSION}, built from \`${SOURCE_REPOSITORY}@${SOURCE_REF}\`.
@@ -256,7 +258,7 @@ jobs:
 
           **Helm**
           \`\`\`
-          helm install teleport oci://ghcr.io/${owner}/charts/teleport-cluster --version ${VERSION}
+          helm install teleport oci://ghcr.io/${GITHUB_REPOSITORY,,}/charts/teleport-cluster --version ${VERSION}
           \`\`\`
           EOF
           ls -lh dist

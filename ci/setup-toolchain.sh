@@ -84,6 +84,26 @@ curl --proto '=https' --tlsv1.2 -fsSL https://sh.rustup.rs \
 export PATH="$CARGO_HOME/bin:$PATH"
 rustup target add wasm32-unknown-unknown
 
+# --- wasm-pack (v15 - v17 only) ----------------------------------------------
+# Those release lines build the web UI's Rust/WASM part with wasm-pack, which
+# upstream bakes into its buildbox image instead of installing it from the
+# Makefile. Newer trees do not define WASM_PACK_VERSION and need nothing here.
+WASM_PACK_VERSION="${WASM_PACK_VERSION:-$(mk_var WASM_PACK_VERSION)}"
+if [ -n "$WASM_PACK_VERSION" ]; then
+  if [ "$(wasm-pack --version 2>/dev/null || true)" != "wasm-pack ${WASM_PACK_VERSION}" ]; then
+    wp="wasm-pack-v${WASM_PACK_VERSION}-$(uname -m)-unknown-linux-musl"
+    mkdir -p "$CARGO_HOME/bin"
+    if curl -fsSL "https://github.com/rustwasm/wasm-pack/releases/download/v${WASM_PACK_VERSION}/${wp}.tar.gz" \
+         | tar -xz -C "$CARGO_HOME/bin" --strip-components=1 "${wp}/wasm-pack"; then
+      echo "Installed prebuilt wasm-pack ${WASM_PACK_VERSION}"
+    else
+      echo "No prebuilt wasm-pack ${WASM_PACK_VERSION}, building it with cargo"
+      cargo install wasm-pack --locked --version "$WASM_PACK_VERSION"
+    fi
+  fi
+  wasm-pack --version
+fi
+
 git config --global --add safe.directory "${CI_PROJECT_DIR:-$PWD}"
 
 go version

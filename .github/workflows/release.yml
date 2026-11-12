@@ -71,10 +71,10 @@ jobs:
       image: ${{ steps.meta.outputs.image }}
     steps:
       - name: Check out build scripts
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Check out Teleport source (${{ env.SOURCE_REPOSITORY }} @ ${{ env.SOURCE_REF }})
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           repository: ${{ env.SOURCE_REPOSITORY }}
           ref: ${{ env.SOURCE_REF }}
@@ -186,7 +186,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Check out Teleport source
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           repository: ${{ env.SOURCE_REPOSITORY }}
           ref: ${{ env.SOURCE_REF }}

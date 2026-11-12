@@ -76,6 +76,15 @@ curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux
   | tar -C /usr/local/node -xJ --strip-components=1
 export PATH="/usr/local/node/bin:$PATH"
 export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+# The corepack bundled with older Node.js releases (e.g. 20.18.0, used by v17)
+# only knows npm registry signing keys that have since been rotated, and dies
+# with "Cannot find matching keyid" when it fetches pnpm. Use a current one.
+if npm install -g --force --engine-strict corepack@latest >/dev/null 2>&1; then
+  echo "corepack $(corepack --version)"
+else
+  echo "Could not upgrade corepack on node ${NODE_VERSION}; disabling its signature check"
+  export COREPACK_INTEGRITY_KEYS=0
+fi
 corepack enable
 
 # --- Rust ----------------------------------------------------------------------
